@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberKit — Advanced Security Operations Toolkit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080b10;
+            --surface: #0e141e;
+            --surf-elevated: #161f2e;
+            --border: #212c3d;
+            --border-focus: #3b82f6;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --green: #10b981;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: var(--font-display);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.05) 0px, transparent 50%);
+        }
+
+        /* HEADER */
+        header {
+            background: rgba(14, 20, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .brand span { color: var(--accent-cyan); }
+        .engine-badge {
+            font-family: var(--font-code);
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .engine-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+        }
+
+        /* NAVIGATION TABS */
+        .workspace { max-width: 1100px; margin: 36px auto; padding: 0 20px; width: 100%; flex: 1; }
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: var(--surface);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-display);
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn:hover { color: var(--text-main); background: var(--surf-elevated); }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.2), rgba(0, 242, 254, 0.2));
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+        }
+
+        /* CARD WORKSPACES */
+        .panel { display: none; }
+        .panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+        }
+        .card-header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+        .card-header h2 { font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; }
+        .card-header p { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* FORM ELEMENTS */
+        .form-grid { display: grid; gap: 18px; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        input[type="text"], input[type="password"], input[type="file"], select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: var(--text-main);
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+        .btn-action {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: #040810;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 22px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            font-family: var(--font-display);
+            cursor: pointer;
+            transition: opacity 0.2s;
+            width: fit-content;
+        }
+        .btn-action:hover { opacity: 0.9; }
+
+        /* TERMINAL OUTPUT DISPLAY */
+        .terminal-block {
+            background: #04060a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: var(--font-code);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            min-height: 120px;
+            max-height: 380px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            margin-top: 18px;
+        }
+        .status-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+        .pill-safe { background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid var(--green); }
+        .pill-warn { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid var(--red); }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            Cyber<span>Kit</span> <small style="font-size:0.7rem; color:var(--text-muted)">v2.0 Ops Suite</small>
+        </div>
+        <div class="engine-badge" id="engine-status">Engine: Standalone Client Mode</div>
+    </header>
+
+    <div class="workspace">
+        <nav class="nav-tabs" role="tablist">
+            <button class="tab-btn active" onclick="showTab('tab-pw')">Password Matrix</button>
+            <button class="tab-btn" onclick="showTab('tab-hash')">Hash Generator</button>
+            <button class="tab-btn" onclick="showTab('tab-caesar')">Caesar Cipher</button>
+            <button class="tab-btn" onclick="showTab('tab-hibp')">Breach Intel (HIBP)</button>
+            <button class="tab-btn" onclick="showTab('tab-meta')">Metadata Extractor</button>
+            <button class="tab-btn" onclick="showTab('tab-recon')">Recon & Port Scan</button>
+            <button class="tab-btn" onclick="showTab('tab-threat')">Threat Intel & URLs</button>
+        </nav>
+
+        <!-- 1. PASSWORD CHECKER -->
+        <div class="panel active" id="tab-pw">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Password Strength Matrix</h2>
+                    <p>Calculates entropy bit depth, pool configuration, and standard dictionary exclusions.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Target Password String</label>
+                        <input type="password" id="pw-in" placeholder="Type password to evaluate entropy..." oninput="evalPassword()">
+                    </div>
+                    <div class="terminal-block" id="pw-out">Awaiting keystrokes...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. HASH GENERATOR -->
+        <div class="panel" id="tab-hash">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Cryptographic Digest Generator</h2>
+                    <p>Computes one-way cryptographic hashes via the browser's native Web Crypto engine.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Plaintext Input</label>
+                        <input type="text" id="hash-in" placeholder="Enter plaintext to hash..." oninput="generateHashes()">
+                    </div>
+                    <div class="terminal-block" id="hash-out">Input text to calculate cryptographic digests...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. CAESAR CIPHER -->
+        <div class="panel" id="tab-caesar">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Caesar Shift Cipher Engine</h2>
+                    <p>Performs symmetric substitution rotation and complete 25-state key exhaustion cracking.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Target Payload</label>
+                        <input type="text" id="caesar-in" placeholder="Plaintext or Ciphertext...">
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <input type="number" id="caesar-shift" value="3" min="1" max="25" style="width:80px; padding:10px; background:var(--bg); color:var(--text-main); border:1px solid var(--border); border-radius:6px;">
+                        <button class="btn-action" onclick="runCaesar(1)">Encrypt</button>
+                        <button class="btn-action" style="background:var(--surf-elevated); color:var(--text-main); border:1px solid var(--border);" onclick="runCaesar(-1)">Decrypt</button>
+                        <button class="btn-action" style="background:var(--surf-elevated); color:var(--text-main); border:1px solid var(--border);" onclick="bruteCaesar()">Exhaust All Shifts</button>
+                    </div>
+                    <div class="terminal-block" id="caesar-out">Awaiting input...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. HAVE I BEEN PWNED -->
+        <div class="panel" id="tab-hibp">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Have I Been Pwned Compromise Monitor</h2>
+                    <p>Query account emails via the official HIBP API, or query password hashes via zero-knowledge k-Anonymity.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Account Email (Requires HIBP API Key via Local Server)</label>
+                        <input type="text" id="hibp-email" placeholder="user@company.com">
+                    </div>
+                    <div class="input-group">
+                        <label>HIBP API Key</label>
+                        <input type="password" id="hibp-key" placeholder="Enter key (leave blank to use Client-Side Password Hash check below)">
+                    </div>
+                    <button class="btn-action" onclick="checkEmailBreach()">Query Email Breaches</button>
+
+                    <hr style="border:0; border-top:1px solid var(--border); margin:10px 0;">
+
+                    <div class="input-group">
+                        <label>Zero-Knowledge Password Leak Scanner (Free & No API Key)</label>
+                        <input type="password" id="hibp-pw" placeholder="Enter password to check if breached in leaks...">
+                    </div>
+                    <button class="btn-action" style="background:var(--surf-elevated); color:var(--text-main); border:1px solid var(--border);" onclick="checkPasswordKAnonymity()">Check Password via k-Anonymity</button>
+
+                    <div class="terminal-block" id="hibp-out">Enter an email or test a password hash against the breach database...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. METADATA EXTRACTOR -->
+        <div class="panel" id="tab-meta">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Metadata & Forensics Extractor</h2>
+                    <p>Extract EXIF camera tags, geolocations, author data, and creation timestamps from JPEGs and PDFs.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Upload File (JPEG or PDF)</label>
+                        <input type="file" id="meta-file" accept=".jpg,.jpeg,.pdf">
+                    </div>
+                    <button class="btn-action" onclick="processMetadata()">Extract Metadata Attributes</button>
+                    <div class="terminal-block" id="meta-out">Select an image or PDF to inspect embedded metadata...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. RECON SCANNER -->
+        <div class="panel" id="tab-recon">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Reconnaissance & Port Mapper</h2>
+                    <p>Executes multi-threaded TCP SYN/Connect probes to discover open services and banners.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Target Domain or IP Address</label>
+                        <input type="text" id="scan-target" placeholder="e.g. scanme.nmap.org or 127.0.0.1">
+                    </div>
+                    <button class="btn-action" onclick="executePortScan()">Initiate Network Probe</button>
+                    <div class="terminal-block" id="scan-out">Waiting for scan target...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. THREAT INTEL -->
+        <div class="panel" id="tab-threat">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Phishing & Threat Intelligence Analyzer</h2>
+                    <p>Detects typosquatting, deceptive brand cloaking, and queries VirusTotal threat databases.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Suspicious URL</label>
+                        <input type="text" id="threat-url" placeholder="https://login.paypal.verify-account.tk">
+                    </div>
+                    <div class="input-group">
+                        <label>VirusTotal API Key (Optional)</label>
+                        <input type="password" id="threat-key" placeholder="Enter VT v3 key to check domain engine verifications">
+                    </div>
+                    <button class="btn-action" onclick="analyzeThreatUrl()">Execute Threat Inspection</button>
+                    <div class="terminal-block" id="threat-out">Awaiting target domain...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        CyberKit . Author: Hamid Shafiq, Armaghan Arshad, Abdul Basit, Aqeel Abbas · University of Haripur
+    </footer>
+
+    <script>
+        // Check for local Flask server connection
+        let backendOnline = false;
+        async function checkBackend() {
+            try {
+                const res = await fetch('/api/scan-ports', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({target: ''})
+                });
+                backendOnline = true;
+                const badge = document.getElementById('engine-status');
+                badge.textContent = "Engine: Local Python Server Connected";
+                badge.style.color = "var(--green)";
+            } catch(e) {
+                backendOnline = false;
+            }
+        }
+        checkBackend();
+
+        function showTab(id) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // TOOL 1: PASSWORD
+        function evalPassword() {
+            const pw = document.getElementById('pw-in').value;
+            const out = document.getElementById('pw-out');
+            if(!pw) { out.textContent = "Awaiting keystrokes..."; return; }
+            let pool = 0;
+            if(/[a-z]/.test(pw)) pool += 26;
+            if(/[A-Z]/.test(pw)) pool += 26;
+            if(/[0-9]/.test(pw)) pool += 10;
+            if(/[^a-zA-Z0-9]/.test(pw)) pool += 32;
+            const entropy = Math.round(pw.length * Math.log2(pool || 1));
+            
+            let verdict = "WEAK";
+            if (entropy > 60) verdict = "STRONG";
+            else if (entropy > 36) verdict = "MODERATE";
+
+            out.innerHTML = `[+] Evaluated Length : ${pw.length} characters\n` +
+                            `[+] Character Pool   : ${pool} symbols\n` +
+                            `[+] Entropy Estimate : ~${entropy} bits\n` +
+                            `[+] Status Verdict   : <span class="status-pill ${entropy > 50 ? 'pill-safe' : 'pill-warn'}">${verdict}</span>`;
+        }
+
+        // TOOL 2: HASHES (Web Crypto API)
+        async function generateHashes() {
+            const str = document.getElementById('hash-in').value;
+            const out = document.getElementById('hash-out');
+            if(!str) { out.textContent = "Input text to calculate cryptographic digests..."; return; }
+
+            const enc = new TextEncoder().encode(str);
+            const sha1Buf = await crypto.subtle.digest('SHA-1', enc);
+            const sha256Buf = await crypto.subtle.digest('SHA-256', enc);
+            const sha512Buf = await crypto.subtle.digest('SHA-512', enc);
+
+            const toHex = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
+            out.textContent = `SHA-1   : ${toHex(sha1Buf)}\nSHA-256 : ${toHex(sha256Buf)}\nSHA-512 : ${toHex(sha512Buf)}`;
+        }
+
+        // TOOL 3: CAESAR CIPHER
+        function caesarShift(text, shift) {
+            return text.split('').map(c => {
+                if (/[A-Z]/.test(c)) return String.fromCharCode((c.charCodeAt(0) - 65 + shift + 26) % 26 + 65);
+                if (/[a-z]/.test(c)) return String.fromCharCode((c.charCodeAt(0) - 97 + shift + 26) % 26 + 97);
+                return c;
+            }).join('');
+        }
+        function runCaesar(direction) {
+            const txt = document.getElementById('caesar-in').value;
+            const s = (parseInt(document.getElementById('caesar-shift').value) || 3) * direction;
+            document.getElementById('caesar-out').textContent = `Result: ${caesarShift(txt, s)}`;
+        }
+        function bruteCaesar() {
+            const txt = document.getElementById('caesar-in').value;
+            let res = "=== Brute Force Decryption Matrix ===\n";
+            for(let i=1; i<=25; i++) {
+                res += `Shift ${String(i).padStart(2,'0')}: ${caesarShift(txt, -i)}\n`;
+            }
+            document.getElementById('caesar-out').textContent = res;
+        }
+
+        // TOOL 4: HIBP
+        async function checkEmailBreach() {
+            const email = document.getElementById('hibp-email').value.trim();
+            const apiKey = document.getElementById('hibp-key').value.trim();
+            const out = document.getElementById('hibp-out');
+            if(!email) { out.textContent = "[-] Please specify a valid target email."; return; }
+
+            out.textContent = "[*] Contacting Have I Been Pwned API via local engine...";
+            try {
+                const res = await fetch('/api/breach-check', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, apiKey })
+                });
+                const data = await res.json();
+                if(data.error) {
+                    out.textContent = `[-] API Error: ${data.error}`;
+                } else if(data.breached) {
+                    let log = `[!] ALERT: Address found in ${data.count} public data breaches!\n\n`;
+                    data.breaches.forEach(b => {
+                        log += `• ${b.Name} (${b.BreachDate}) - Exposed: ${b.DataClasses.join(', ')}\n`;
+                    });
+                    out.innerHTML = log;
+                } else {
+                    out.innerHTML = `<span class="status-pill pill-safe">CLEAN</span> No public breach records discovered for ${email}.`;
+                }
+            } catch(e) {
+                out.textContent = "[-] Server unreachable. Please ensure `python server.py` is actively running to query email APIs.";
+            }
+        }
+
+        async function checkPasswordKAnonymity() {
+            const pw = document.getElementById('hibp-pw').value;
+            const out = document.getElementById('hibp-out');
+            if(!pw) return;
+
+            out.textContent = "[*] Hashing password via SHA-1 and querying k-Anonymity range API...";
+            const enc = new TextEncoder().encode(pw);
+            const sha1Buf = await crypto.subtle.digest('SHA-1', enc);
+            const sha1 = Array.from(new Uint8Array(sha1Buf)).map(x => x.toString(16).padStart(2,'0')).join('').toUpperCase();
+            
+            const prefix = sha1.slice(0, 5);
+            const suffix = sha1.slice(5);
+
+            try {
+                const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+                const text = await res.text();
+                const match = text.split('\n').find(l => l.startsWith(suffix));
+                if(match) {
+                    const count = match.split(':')[1].trim();
+                    out.innerHTML = `<span class="status-pill pill-warn">PWNED</span> This password has appeared in <b>${Number(count).toLocaleString()}</b> database leaks! Never use it.`;
+                } else {
+                    out.innerHTML = `<span class="status-pill pill-safe">SAFE</span> Password not observed in known breach dumps.`;
+                }
+            } catch(e) {
+                out.textContent = `[-] Failed to connect directly to HIBP k-Anonymity service: ${e.message}`;
+            }
+        }
+
+        // TOOL 5: METADATA EXTRACTOR
+        async function processMetadata() {
+            const fileInput = document.getElementById('meta-file');
+            const out = document.getElementById('meta-out');
+            if(!fileInput.files.length) { out.textContent = "[-] Select a file first."; return; }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            out.textContent = `[*] Uploading ${file.name} to local metadata engine...`;
+            try {
+                const res = await fetch('/api/extract-metadata', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(data.error) {
+                    out.textContent = `[-] Error: ${data.error}`;
+                } else {
+                    let log = `=== Metadata Catalog for ${data.filename} ===\n`;
+                    for(const [k, v] of Object.entries(data.metadata)) {
+                        log += `${k.padEnd(24)}: ${v}\n`;
+                    }
+                    out.textContent = log || "No embedded EXIF/Metadata tags identified.";
+                }
+            } catch(e) {
+                out.textContent = `[-] Standalone Client Fallback:\nFile: ${file.name}\nSize: ${file.size} bytes\nType: ${file.type}\n\nTo parse raw PDF and EXIF byte tags, run 'python server.py'.`;
+            }
+        }
+
+        // TOOL 6: PORT SCANNER
+        async function executePortScan() {
+            const target = document.getElementById('scan-target').value.trim();
+            const out = document.getElementById('scan-out');
+            if(!target) { out.textContent = "[-] Specify a target host."; return; }
+
+            out.textContent = `[*] Scanning TCP ports on ${target} via multi-threaded Python engine...`;
+            try {
+                const res = await fetch('/api/scan-ports', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ target })
+                });
+                const data = await res.json();
+                if(data.error) {
+                    out.textContent = `[-] Error: ${data.error}`;
+                } else {
+                    let log = `Host: ${data.target} (${data.ip})\n\nPORT    STATUS   SERVICE\n═════════════════════════════════\n`;
+                    data.open_ports.forEach(p => {
+                        log += `${String(p.port).padEnd(8)}OPEN     ${p.service}\n`;
+                    });
+                    out.textContent = data.open_ports.length ? log : "Scan complete. No standard open ports discovered.";
+                }
+            } catch(e) {
+                out.textContent = "[-] Web browsers block raw TCP sockets for security. You must run 'python server.py' to perform live port scans.";
+            }
+        }
+
+        // TOOL 7: THREAT INTEL
+        async function analyzeThreatUrl() {
+            const url = document.getElementById('threat-url').value.trim();
+            const apiKey = document.getElementById('threat-key').value.trim();
+            const out = document.getElementById('threat-out');
+            if(!url) return;
+
+            out.textContent = `[*] Inspecting URL structure and querying threat intel...`;
+            try {
+                const res = await fetch('/api/threat-intel', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ url, apiKey })
+                });
+                const data = await res.json();
+                let log = `Evaluated Domain: ${data.domain}\n\n`;
+                if(data.flags && data.flags.length) {
+                    log += `Heuristic Flags:\n`;
+                    data.flags.forEach(f => log += ` [!] ${f}\n`);
+                } else {
+                    log += `Heuristic Evaluation: Clean string configuration.\n`;
+                }
+
+                if(data.virustotal) {
+                    log += `\nVirusTotal Reputation Stats:\n` +
+                           ` - Malicious  : ${data.virustotal.malicious}\n` +
+                           ` - Suspicious : ${data.virustotal.suspicious}\n` +
+                           ` - Harmless   : ${data.virustotal.harmless}\n`;
+                }
+                out.textContent = log;
+            } catch(e) {
+                // Client-side heuristic fallback
+                out.textContent = `Client-side Analysis for: ${url}\n[!] Running in offline mode. Start 'python server.py' for full VirusTotal API validation.`;
+            }
+        }
+    </script>
+</body>
+</html>
